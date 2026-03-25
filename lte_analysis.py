@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ============================
+# CONFIG
+# ============================
+
+BASE_DIR = "/home/dave/Desktop/LTE"
+EVENTS_PATH = os.path.join(BASE_DIR, "lte_events.dat")
+POWER_PATH = os.path.join(BASE_DIR, "lte_power.dat")
+
+EVENTI_ATTESI = 17
+
+CHUNK_SIZE = 10_000_000
+MAX_POINTS = 200_000
+
+# ============================
+# 1. CONTA EVENTI (STREAMING)
+# ============================
+
+eventi_rilevati = 0
+prev_last = 0
+
+print("Analisi eventi in corso...")
+
+with open(EVENTS_PATH, "rb") as f:
+    while True:
+        data = np.fromfile(f, dtype=np.uint8, count=CHUNK_SIZE)
+        if len(data) == 0:
+            break
+
+        binary = data > 0
+        edges = np.diff(binary.astype(np.int8)) == 1
+        eventi_rilevati += int(edges.sum())
+
+        if binary[0] == 1 and prev_last == 0:
+            eventi_rilevati += 1
+
+        prev_last = int(binary[-1])
+
+# ============================
+# 2. BLER-LIKE
+# ============================
+
+bler_like = max(0.0, (EVENTI_ATTESI - eventi_rilevati) / EVENTI_ATTESI)
+
+print("\n=== RISULTATI ===")
+print("Eventi attesi:", EVENTI_ATTESI)
+print("Eventi rilevati:", eventi_rilevati)
+print("BLER-like:", round(bler_like * 100, 2), "%")
+
+# ============================
+# 3. GRAFICO POWER
+# ============================
+
+print("\nGenerazione grafico power...")
+
+power_size = os.path.getsize(POWER_PATH)
+power_len = power_size // 4  # float32
+
+power = np.memmap(POWER_PATH, dtype=np.float32, mode='r', shape=(power_len,))
+
+if power_len > MAX_POINTS:
+    step = power_len // MAX_POINTS
+    power_view = power[::step]
+else:
+    power_view = power
+
+power_png = os.path.join(BASE_DIR, "lte_power_plot.png")
+
+plt.figure(figsize=(12, 4))
+plt.plot(power_view)
+plt.title("LTE Power (downsampled)")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig(power_png, dpi=150)
+plt.close()
+
+# ============================
+# 4. GRAFICO EVENTI
+# ============================
+
+print("Generazione grafico eventi...")
+
+events_size = os.path.getsize(EVENTS_PATH)
+events_len = events_size
+
+events = np.memmap(EVENTS_PATH, dtype=np.uint8, mode='r', shape=(events_len,))
+
+if events_len > MAX_POINTS:
+    step = events_len // MAX_POINTS
+    events_view = events[::step]
+else:
+    events_view = events
+
+events_png = os.path.join(BASE_DIR, "lte_events_plot.png")
+
+plt.figure(figsize=(12, 3))
+plt.plot(events_view)
+plt.title("LTE Events (downsampled)")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig(events_png, dpi=150)
+plt.close()
+
+# ============================
+# 5. INTERPRETAZIONE
+# ============================
+
+print("\n=== INTERPRETAZIONE ===")
+
+if bler_like < 0.05:
+    print("Correlazione molto buona")
+elif bler_like < 0.15:
+    print("Correlazione buona/discreta")
+elif bler_like < 0.30:
+    print("Correlazione debole")
+else:
+    print("Correlazione scarsa - rivedere threshold o frequenza")
+
+print("\nFile generati:")
+print(power_png)
+print(events_png)
