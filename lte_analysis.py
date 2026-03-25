@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 # CONFIG
 # ============================
 
-BASE_DIR = "/home/dave/Desktop/LTE"
+BASE_DIR = "<dir path>"
 EVENTS_PATH = os.path.join(BASE_DIR, "lte_events.dat")
 POWER_PATH = os.path.join(BASE_DIR, "lte_power.dat")
 
-EVENTI_ATTESI = 17
+EVENTI_ATTESI = 17 # to change 
 
 CHUNK_SIZE = 10_000_000
 MAX_POINTS = 200_000
@@ -21,10 +21,10 @@ MAX_POINTS = 200_000
 # 1. CONTA EVENTI (STREAMING)
 # ============================
 
-eventi_rilevati = 0
+detected_events = 0
 prev_last = 0
 
-print("Analisi eventi in corso...")
+print("Analysis of ongoing events...")
 
 with open(EVENTS_PATH, "rb") as f:
     while True:
@@ -34,7 +34,7 @@ with open(EVENTS_PATH, "rb") as f:
 
         binary = data > 0
         edges = np.diff(binary.astype(np.int8)) == 1
-        eventi_rilevati += int(edges.sum())
+        detected_events += int(edges.sum())
 
         if binary[0] == 1 and prev_last == 0:
             eventi_rilevati += 1
@@ -45,18 +45,18 @@ with open(EVENTS_PATH, "rb") as f:
 # 2. BLER-LIKE
 # ============================
 
-bler_like = max(0.0, (EVENTI_ATTESI - eventi_rilevati) / EVENTI_ATTESI)
+bler_like = max(0.0, (EXPECTED_EVENTS - detected_events) / EXPECTED_EVENTS)
 
-print("\n=== RISULTATI ===")
-print("Eventi attesi:", EVENTI_ATTESI)
-print("Eventi rilevati:", eventi_rilevati)
+print("\n=== Results ===")
+print("EXPECTED EVENTS:", EXPECTED_EVENTS)
+print("DETECTED EVENTS:", detected_events)
 print("BLER-like:", round(bler_like * 100, 2), "%")
 
 # ============================
 # 3. GRAFICO POWER
 # ============================
 
-print("\nGenerazione grafico power...")
+print("\nPower Chart Generation...")
 
 power_size = os.path.getsize(POWER_PATH)
 power_len = power_size // 4  # float32
@@ -83,7 +83,7 @@ plt.close()
 # 4. GRAFICO EVENTI
 # ============================
 
-print("Generazione grafico eventi...")
+print("Generate an event chart...")
 
 events_size = os.path.getsize(EVENTS_PATH)
 events_len = events_size
@@ -110,17 +110,17 @@ plt.close()
 # 5. INTERPRETAZIONE
 # ============================
 
-print("\n=== INTERPRETAZIONE ===")
+print("\n=== INTERPRETATION ===")
 
 if bler_like < 0.05:
-    print("Correlazione molto buona")
+    print("Very good correlation")
 elif bler_like < 0.15:
-    print("Correlazione buona/discreta")
+    print("Good/fair correlation")
 elif bler_like < 0.30:
-    print("Correlazione debole")
+    print("Weak correlation")
 else:
-    print("Correlazione scarsa - rivedere threshold o frequenza")
+    print("Weak correlation - review threshold or frequency")
 
-print("\nFile generati:")
+print("\nGenerated files:")
 print(power_png)
 print(events_png)
