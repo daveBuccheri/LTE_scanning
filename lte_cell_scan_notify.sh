@@ -9,17 +9,18 @@
 CELLSEARCH="/usr/src/LTE-Cell-Scanner/CellSearch_hackrf"
 
 # Directory output
-OUTPUT_DIR="/home/dave/Desktop/LTE"
-OUTPUT_FILE="$OUTPUT_DIR/lte_cell_scan_output.txt"
+OUTPUT_DIR="<directory_path>"
+OUTPUT_FILE="$OUTPUT_DIR/<output_file_name>.txt"
 
-# Frequenze (modificabili)
+# Frequencies (to be adjusted based on the LTE band in question)
+# Ex: Band 3
 FREQ_START="1800e6"
 FREQ_END="1820e6"
 
 # Notify binary
 NOTIFY="/usr/bin/notify-send"
 
-# Fix DISPLAY per notifiche (utile in VM)
+# Fix DISPLAY for notify (useful in VM)
 export DISPLAY=:0
 
 # ================================
@@ -27,19 +28,19 @@ export DISPLAY=:0
 # ================================
 
 if [ ! -f "$CELLSEARCH" ]; then
-    echo "Errore: CellSearch_rtlsdr non trovato in $CELLSEARCH"
+    echo "Errore: CellSearch_hackrf not found in $CELLSEARCH"
     exit 1
 fi
 
 if [ ! -f "$NOTIFY" ]; then
-    echo "Errore: notify-send non trovato"
+    echo "Errore: notify-send not found"
     exit 1
 fi
 
-# Crea directory se non esiste
+# Create dir if not exists
 mkdir -p "$OUTPUT_DIR"
 
-echo "🚀 Avvio scansione LTE..."
+echo "🚀 Start Scanning LTE..."
 echo "Range: $FREQ_START - $FREQ_END"
 echo "Output: $OUTPUT_FILE"
 echo "----------------------------------"
