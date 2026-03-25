@@ -12,7 +12,7 @@ BASE_DIR = "<dir path>"
 EVENTS_PATH = os.path.join(BASE_DIR, "lte_events.dat")
 POWER_PATH = os.path.join(BASE_DIR, "lte_power.dat")
 
-EVENTI_ATTESI = 17 # to change 
+EXPECTED_EVENTS = 17 # to change 
 
 CHUNK_SIZE = 10_000_000
 MAX_POINTS = 200_000
@@ -37,7 +37,7 @@ with open(EVENTS_PATH, "rb") as f:
         detected_events += int(edges.sum())
 
         if binary[0] == 1 and prev_last == 0:
-            eventi_rilevati += 1
+            detected_events += 1
 
         prev_last = int(binary[-1])
 
