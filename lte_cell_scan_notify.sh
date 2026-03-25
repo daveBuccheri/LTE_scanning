@@ -50,28 +50,37 @@ echo "----------------------------------"
 # ================================
 
 "$CELLSEARCH" -s "$FREQ_START" -e "$FREQ_END" | tee "$OUTPUT_FILE" | awk -v notify="$NOTIFY" '
-/Found cell/ {
+#!/usr/bin/env bash
+
+CELLSEARCH="/usr/src/LTE-Cell-Scanner/CellSearch_rtlsdr"
+OUTPUT_FILE="/home/dave/Desktop/LTE/lte_cell_scan_output.txt"
+NOTIFY="/usr/bin/notify-send"
+
+export DISPLAY=:0
+
+"$CELLSEARCH" -s 1800e6 -e 1820e6 | tee "$OUTPUT_FILE" | awk -v notify="$NOTIFY" '
+
+/Detected a FDD cell/ {
     print "\n======================"
     print "🚨 CELL DETECTED 🚨"
-    system(notify " \"LTE Alert\" \"Cell detected!\"")
-    next
+
+    # extract frequency
+    match($0, /frequency ([0-9.]+MHz)/, f)
+    freq = f[1]
+
+    system(notify " \"LTE Alert\" \"Cell detected at " freq "\"")
 }
 
-/PCI/ {
-    pci=$2
+/cell ID:/ {
+    pci=$3
     print
 }
 
-/EARFCN/ {
-    earfcn=$2
-    print
-}
-
-/RSRP/ {
-    rsrp=$2
+/RX power level:/ {
+    rsrp=$4 " " $5
     print
 
-    cmd = notify " \"LTE Cell Found\" \"PCI: " pci " | EARFCN: " earfcn " | RSRP: " rsrp "\""
+    cmd = notify " \"LTE Cell Found\" \"PCI: " pci " | RSRP: " rsrp "\""
     system(cmd)
 
     print "======================\n"
